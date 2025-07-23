@@ -1,1 +1,44 @@
-(function(u,a,R,i,n,y,p){"use strict";const{findByProps:E}=R,{storage:s}=i,{Forms:C,Button:B}=y,{useProxy:_}=a.React,log=n.logger;function d(b){const m=b?.bio?.match(/\u{e005b}\u{e0023}([\u{e0061}-\u{e0066}\u{e0041}-\u{e0046}\u{0030}-\u{0039}]{1,6})\u{e002c}\u{e0023}([\u{e0061}-\u{e0066}\u{e0041}-\u{e0046}\u{0030}-\u{0039}]{1,6})\u{e005d}/u);if(!m)return;const c=[...m[0]].map(x=>String.fromCodePoint(x.codePointAt(0)-0xe0000)).join("").slice(1,-1).split(",").map(x=>parseInt(x.replace("#","0x"),16));return c}let pch;const onLoad=async()=>{const P=E("getUserProfile");pch=BdApi.monkeyPatch(P,"getUserProfile",{after:({returnValue:r})=>{const u=r.user,c=d(u);if(c){r.themeColors=c;r.profileAccentColor=c[0];r.profileGradient={colors:[`#${c[0].toString(16).padStart(6,"0")}`,`#${c[1].toString(16).padStart(6,"0")}`],angle:135};r.premiumType=2}}});s._fpt=pch};const onUnload=()=>{s._fpt?.()};const Settings=()=>{_s=s;_();log.log("FakeProfileThemes settings loaded");return a.React.createElement(C.FormSection,null,a.React.createElement(C.FormTitle,{tag:"h3"},"Fake Profile Themes"),a.React.createElement(C.FormText,null,a.React.createElement(B,{onPress:()=>log.log("Use Vencord to copy 3y3")},B.Colors.PRIMARY,"Copy 3y3 (via Vencord)")))};u.default={onLoad:onLoad,onUnload:onUnload,settings:Settings,manifest:{name:"FakeProfileThemes",description:"use bio tag [#000,#fff] to fake a user having profile theme",authors:[],version:"1.0.0",vendetta:{icon:"palette",original:"awkoro/fake-profile-theme"}}};Object.defineProperty(u,"__esModule",{value:!0});return u})({},vendetta.metro.common,vendetta.metro,vendetta.plugin,vendetta,vendetta.ui.components,vendetta.storage);
+(function(u, m, M, S, v, U, _){
+  "use strict";
+  const {findByProps: F} = M;
+  const {storage: st} = S;
+  const {Forms:{FormSection:FS,FormTitle:FT,FormText:FX},Button:FB} = U;
+  const {React:R} = m;
+  const {patchCall, unpatchAll} = v;
+  const {logger:L} = v;
+
+  function parseBio(b){
+    const t = b?.bio?.match(/\u{e005b}\u{e0023}([0-9A-Fa-f]{1,6})\u{e002c}\u{e0023}([0-9A-Fa-f]{1,6})\u{e005d}/u);
+    return t ? t.slice(1).map(x=>parseInt(x,16)) : null;
+  }
+
+  const onLoad = ()=>{
+    const profileModule = F("getUserProfile");
+    patchCall(profileModule, "getUserProfile", (args, ret)=>{
+      const cols = parseBio(ret.user);
+      if(cols){
+        ret.themeColors = cols;
+        ret.profileAccentColor = cols[0];
+        ret.profileGradient = { colors: [`#${cols[0].toString(16).padStart(6,"0")}`, `#${cols[1].toString(16).padStart(6,"0")}`], angle: 135 };
+        ret.premiumType = 2;
+      }
+      return ret;
+    });
+  };
+
+  const onUnload = ()=>{
+    unpatchAll("FakeProfileThemes");
+  };
+
+  const settings = ()=>R.createElement(
+    FS, null,
+    R.createElement(FT, {tag:"h3"}, "Fake Profile Themes"),
+    R.createElement(FX, null,
+      R.createElement(FB, {onPress:()=>L.log("Copied!")}, "Copy 3y3")
+    )
+  );
+
+  u.default = { onLoad, onUnload, settings };
+  Object.defineProperty(u, "__esModule", {value: true});
+  return u;
+})({}, vendetta.metro.common, vendetta.metro, vendetta.storage, vendetta, vendetta.ui.components, vendetta);
